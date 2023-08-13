@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Website</title>
+</head>
+<body>
+  <div style="text-align: center;">
+    <h1>Simple Website</h1>
+    <input type="text" id="wordInput" placeholder="Enter a word">
+    <button id="submitButton">Add Word</button>
+    <div id="wordList"></div>
+  </div>
+
+  <script>
+    let deviceId;
+    fetch("https://api.ipify.org?format=json")
+      .then(response => response.json())
+      .then(data => {
+        deviceId = data.ip;
+        const wordInput = document.getElementById('wordInput');
+        const submitButton = document.getElementById('submitButton');
+        const wordList = document.getElementById('wordList');
+
+        async function updateWordList() {
+          wordList.innerHTML = '';
+          const response = await fetch(`/getWords?deviceId=${deviceId}`);
+          const words = await response.json();
+          words.forEach(word => {
+            const wordItem = document.createElement('div');
+            wordItem.textContent = word;
+            wordList.appendChild(wordItem);
+          });
+        }
+
+        submitButton.addEventListener('click', async () => {
+          const newWord = wordInput.value;
+          if (newWord.trim() !== '') {
+            await fetch('/add', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: `deviceId=${deviceId}&word=${encodeURIComponent(newWord)}`,
+            });
+            wordInput.value = '';
+            updateWordList();
+          }
+        });
+
+        updateWordList();
+      });
+  </script>
+</body>
+</html>
